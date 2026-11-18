@@ -24,6 +24,22 @@ pipeline {
             }
         }
 
+        stage('Unit Tests') {
+            steps {
+                sh '''
+                    set -eu
+
+                    python3 -m venv .venv
+
+                    .venv/bin/python -m pip install \
+                        --disable-pip-version-check \
+                        -r requirements-dev.txt
+
+                    PYTHONPATH=lambda .venv/bin/python -m pytest -v
+                '''
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''

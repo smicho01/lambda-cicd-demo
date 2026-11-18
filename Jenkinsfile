@@ -71,6 +71,7 @@ pipeline {
             steps {
                 sh '''
                     docker build \
+                        --pull \
                         --platform linux/amd64 \
                         -t "lambda-cicd-demo:${IMAGE_TAG}" .
                 '''

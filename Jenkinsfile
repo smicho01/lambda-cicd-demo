@@ -30,16 +30,41 @@ pipeline {
                 sh '''
                     set -eu
 
+                    mkdir -p test-results
+                    rm -f test-results/pytest.xml
+
                     docker build \
                         --platform linux/amd64 \
                         -f Dockerfile.test \
                         -t "lambda-cicd-demo-tests:${GIT_COMMIT}" .
 
-                    docker run --rm \
-                        "lambda-cicd-demo-tests:${GIT_COMMIT}"
+                    container_id=$(docker create \
+                        "lambda-cicd-demo-tests:${GIT_COMMIT}" \
+                        python -m pytest -v --junitxml=/tmp/pytest.xml)
+
+                    trap 'docker rm -f "$container_id" >/dev/null 2>&1 || true' EXIT
+
+                    docker start -a "$container_id" || true
+
+                    docker cp \
+                        "$container_id:/tmp/pytest.xml" \
+                        test-results/pytest.xml
+
+                    exit_code=$(docker inspect \
+                        --format '{{.State.ExitCode}}' "$container_id")
+
+                    test "$exit_code" -eq 0
                 '''
             }
+
+            post {
+                always {
+                    junit testResults: 'test-results/pytest.xml',
+                        allowEmptyResults: true
+                }
+            }
         }
+
 
 
         stage('Build Docker Image') {

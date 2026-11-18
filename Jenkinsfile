@@ -32,5 +32,11 @@ pipeline {
                 sh 'aws --version'
             }
         }
+
+        stage('Check AWS Identity') {
+            steps {
+                sh 'aws sts get-caller-identity'
+            }
+        }
     }
 }

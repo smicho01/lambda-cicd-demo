@@ -4,5 +4,5 @@ def lambda_handler(event, context):
 
     return {
         "message": f"Hello, {name}!",
-        "version": "1.1"
+        "version": "1.2"
     }

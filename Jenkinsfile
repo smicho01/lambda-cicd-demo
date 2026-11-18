@@ -14,5 +14,17 @@ pipeline {
                 sh 'docker version'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build \
+                        --platform linux/amd64 \
+                        -t "lambda-cicd-demo:${GIT_COMMIT}" .
+                '''
+
+                sh 'docker image inspect "lambda-cicd-demo:${GIT_COMMIT}" --format "{{.Id}}"'
+            }
+        }
     }
 }

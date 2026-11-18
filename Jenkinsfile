@@ -3,15 +3,20 @@ pipeline {
     agent any
 
     stages {
-        stage('Verify Git Checkout') {
+        stage('Validate Branch') {
             steps {
-                sh 'git log -1 --format="%h %s"'
-            }
-        }
+                script {
+                    def branchName = env.BRANCH_NAME
 
-        stage('Check Docker') {
-            steps {
-                sh 'docker version'
+                    if (!(branchName == 'master' || branchName ==~ /^JEN-[0-9]+$/)) {
+                        error("Invalid branch name: ${branchName}")
+                    }
+
+                    env.IMAGE_TAG = branchName
+
+                    echo "Branch: ${branchName}"
+                    echo "Docker image tag: ${env.IMAGE_TAG}"
+                }
             }
         }
 
@@ -20,59 +25,8 @@ pipeline {
                 sh '''
                     docker build \
                         --platform linux/amd64 \
-                        -t "lambda-cicd-demo:${GIT_COMMIT}" .
+                        -t "lambda-cicd-demo:${IMAGE_TAG}" .
                 '''
-            }
-        }
-
-        stage('Check AWS CLI') {
-            steps {
-                sh 'aws --version'
-            }
-        }
-
-        stage('Verify AWS Identity') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'aws-lambda-cicd',
-                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                    )
-                ]) {
-                    sh 'aws sts get-caller-identity --query Arn --output text'
-                }
-            }
-        }
-
-        stage('Push Image to ECR') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'aws-lambda-cicd',
-                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                    )
-                ]) {
-                    sh '''
-                        set +x
-                        export DOCKER_CONFIG="$(mktemp -d)"
-                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
-
-                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-                        REGISTRY="${ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com"
-                        IMAGE_URI="${REGISTRY}/lambda-cicd-demo:${GIT_COMMIT}"
-
-                        aws ecr get-login-password --region eu-west-2 |
-                            docker login --username AWS --password-stdin "$REGISTRY"
-
-                        docker tag "lambda-cicd-demo:${GIT_COMMIT}" "$IMAGE_URI"
-
-                        docker push "$IMAGE_URI"
-
-                        echo "Pushed image: $IMAGE_URI"
-                    '''
-                }
             }
         }
     }

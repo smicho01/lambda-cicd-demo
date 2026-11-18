@@ -24,21 +24,23 @@ pipeline {
             }
         }
 
+        
         stage('Unit Tests') {
             steps {
                 sh '''
                     set -eu
 
-                    python3 -m venv .venv
+                    docker build \
+                        --platform linux/amd64 \
+                        -f Dockerfile.test \
+                        -t "lambda-cicd-demo-tests:${GIT_COMMIT}" .
 
-                    .venv/bin/python -m pip install \
-                        --disable-pip-version-check \
-                        -r requirements-dev.txt
-
-                    PYTHONPATH=lambda .venv/bin/python -m pytest -v
+                    docker run --rm \
+                        "lambda-cicd-demo-tests:${GIT_COMMIT}"
                 '''
             }
         }
+
 
         stage('Build Docker Image') {
             steps {

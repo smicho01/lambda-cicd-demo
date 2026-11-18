@@ -38,5 +38,11 @@ pipeline {
                 sh 'aws sts get-caller-identity'
             }
         }
+
+        stage('Inspect AWS Configuration') {
+            steps {
+                sh 'aws configure list'
+            }
+        }
     }
 }

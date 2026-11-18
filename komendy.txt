@@ -1,0 +1,36 @@
+
+# Test lambda locally
+python3 -c "from lambda_function import lambda_handler; print(lambda_handler({'name': 'Jenkins'}, None))"
+
+
+# Build Docker
+docker buildx build \
+  --platform linux/amd64 \
+  --provenance=false \
+  --load \
+  -t lambda-cicd-demo:local .
+
+
+# Run docker
+docker run -d \
+  --rm \
+  --name lambda-cicd-demo \
+  -p 9000:8080 \
+  lambda-cicd-demo:local
+
+
+# Test it locally
+curl -X POST \
+  "http://localhost:9000/2015-03-31/functions/function/invocations" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Jenkins"}'
+
+
+
+
+# Create ECR repo
+
+aws ecr create-repository \
+  --repository-name lambda-cicd-demo \
+  --region eu-west-2 \
+  --image-tag-mutability IMMUTABLE

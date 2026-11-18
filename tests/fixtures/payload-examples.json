@@ -1,0 +1,9 @@
+{
+  "product": {
+    "id": "PROD-001",
+    "name": "Mechanical Keyboard",
+    "unitPrice": "49.90",
+    "quantity": 2,
+    "discountPercent": 10
+  }
+}

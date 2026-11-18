@@ -1,4 +1,10 @@
-FROM public.ecr.aws/lambda/python:3.13
+FROM public.ecr.aws/lambda/python:3.14
+
+RUN dnf upgrade -y --releasever=latest \
+        rpm \
+        rpm-libs \
+        sqlite-libs \
+    && dnf clean all
 
 COPY lambda/lambda_function.py ${LAMBDA_TASK_ROOT}
 

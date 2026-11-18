@@ -26,5 +26,11 @@ pipeline {
                 sh 'docker image inspect "lambda-cicd-demo:${GIT_COMMIT}" --format "{{.Id}}"'
             }
         }
+
+        stage('Check AWS CLI') {
+            steps {
+                sh 'aws --version'
+            }
+        }
     }
 }

@@ -77,6 +77,54 @@ pipeline {
             }
         }
 
+
+        stage('Trivy Security Scan') {
+            steps {
+                sh '''
+                    set -eu
+
+                    image_archive="lambda-image.tar"
+                    scanner_container=""
+
+                    cleanup() {
+                        rm -f "$image_archive"
+
+                        if [ -n "$scanner_container" ]; then
+                            docker rm -f "$scanner_container" >/dev/null 2>&1 || true
+                        fi
+                    }
+
+                    trap cleanup EXIT
+
+                    docker save \
+                        -o "$image_archive" \
+                        "lambda-cicd-demo:${IMAGE_TAG}"
+
+                    scanner_container=$(docker create \
+                        -v trivy-cache:/root/.cache \
+                        ghcr.io/aquasecurity/trivy:0.76.2 \
+                        image \
+                        --input /tmp/lambda-image.tar \
+                        --scanners vuln \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 1)
+
+                    docker cp \
+                        "$image_archive" \
+                        "$scanner_container:/tmp/lambda-image.tar"
+
+                    docker start -a "$scanner_container" || true
+
+                    scan_exit_code=$(docker inspect \
+                        --format '{{.State.ExitCode}}' \
+                        "$scanner_container")
+
+                    test "$scan_exit_code" -eq 0
+                '''
+            }
+        }
+
+
         stage('Push Image to ECR') {
             steps {
                 withCredentials([

@@ -100,14 +100,17 @@ pipeline {
                         -o "$image_archive" \
                         "lambda-cicd-demo:${IMAGE_TAG}"
 
+                    
                     scanner_container=$(docker create \
                         -v trivy-cache:/root/.cache \
                         ghcr.io/aquasecurity/trivy:0.76.2 \
                         image \
                         --input /tmp/lambda-image.tar \
+                        --db-repository ghcr.io/aquasecurity/trivy-db:2 \
                         --scanners vuln \
                         --severity HIGH,CRITICAL \
                         --exit-code 1)
+
 
                     docker cp \
                         "$image_archive" \

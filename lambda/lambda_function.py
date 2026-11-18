@@ -55,5 +55,6 @@ def lambda_handler(event, context):
         "currency": "GBP",
         "subtotal": f"{subtotal:.2f}",
         "discount": f"{discount:.2f}",
-        "total": f"{total:.2f}"
+        "total": f"{total:.2f}",
+        "version": "1.0.2"
     }

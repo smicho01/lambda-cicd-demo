@@ -8,5 +8,11 @@ pipeline {
                 sh 'git log -1 --format="%h %s"'
             }
         }
+
+        stage('Check Docker') {
+            steps {
+                sh 'docker version'
+            }
+        }
     }
 }

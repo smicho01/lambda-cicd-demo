@@ -1,10 +1,10 @@
+
 pipeline {
     agent any
 
     stages {
         stage('Verify Git Checkout') {
             steps {
-                echo 'Jenkins successfully loaded the pipeline from GitHub!'
                 sh 'git log -1 --format="%h %s"'
             }
         }
@@ -33,15 +33,17 @@ pipeline {
             }
         }
 
-        stage('Check AWS Identity') {
+        stage('Verify AWS Identity') {
             steps {
-                sh 'aws sts get-caller-identity'
-            }
-        }
-
-        stage('Inspect AWS Configuration') {
-            steps {
-                sh 'aws configure list'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-lambda-cicd',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh 'aws sts get-caller-identity --query Arn --output text'
+                }
             }
         }
     }

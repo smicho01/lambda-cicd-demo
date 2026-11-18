@@ -4,7 +4,8 @@ RUN dnf upgrade -y --releasever=latest \
         rpm \
         rpm-libs \
         sqlite-libs \
-    && dnf clean all
+    && dnf clean all \
+    && python -m pip uninstall -y pip
 
 COPY lambda/lambda_function.py ${LAMBDA_TASK_ROOT}
 
